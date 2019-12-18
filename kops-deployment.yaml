@@ -1,0 +1,205 @@
+apiVersion: kops/v1alpha2
+kind: Cluster
+metadata:
+  name: tftest.mirdanhost.internal
+spec:
+  additionalPolicies:
+    node: |
+      [
+        # optional custom policies
+        {
+          "Effect": "Allow",
+          "Action": ["sts:AssumeRole"],
+          "Resource": ["arn:aws:iam::901137298195:role/k8s-*"]
+        }
+      ]
+    master: |
+      [
+        # optional custom policies
+        {
+          "Effect": "Allow",
+          "Action": ["sts:AssumeRole"],
+          "Resource": ["arn:aws:iam::901137298195:role/k8s-*"]
+        },
+        # kops 1.5.3 requires adding this for zones not matching the cluster domain
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:ChangeResourceRecordSets",
+                "route53:ListResourceRecordSets",
+                "route53:GetHostedZone"
+            ],
+            "Resource": [
+                "arn:aws:route53:::hostedzone/Z1XMCUO9OK9E2D"
+            ]
+        }
+      ]
+  api:
+    loadBalancer:
+      type: Public
+  channel: stable
+  cloudProvider: aws
+  configBase: s3://mirdan-k8s-kops/tftest.mirdanhost.internal
+  dnsZone: Z1XMCUO9OK9E2D
+  etcdClusters:
+  - etcdMembers:
+    - instanceGroup: master-eu-west-1a
+      name: a
+    - instanceGroup: master-eu-west-1b
+      name: b
+    - instanceGroup: master-eu-west-1c
+      name: c
+    name: main
+  - etcdMembers:
+    - instanceGroup: master-eu-west-1a
+      name: a
+    - instanceGroup: master-eu-west-1b
+      name: b
+    - instanceGroup: master-eu-west-1c
+      name: c
+    name: events
+  kubernetesApiAccess:
+  - 10.99.0.0/20
+  - 210.10.195.106/32
+  - 123.243.200.245/32
+  kubernetesVersion: 1.11.10
+  masterInternalName: api.internal.tftest.mirdanhost.internal
+  masterPublicName: api.tftest.mirdanhost.internal
+  #masterInternalName: tftest.mirdanhost.internal
+  #masterPublicName: tftest.mirdanhost.internal
+  networkCIDR: 10.99.0.0/20
+  networking:
+    calico: {}
+  nonMasqueradeCIDR: 100.64.0.0/10
+  sshAccess:
+  - 0.0.0.0/0
+  subnets:
+  - cidr: 10.99.6.0/24
+    name: eu-west-1a
+    type: Private
+    zone: eu-west-1a
+  - cidr: 10.99.7.0/24
+    name: eu-west-1b
+    type: Private
+    zone: eu-west-1b
+  - cidr: 10.99.8.0/24
+    name: eu-west-1c
+    type: Private
+    zone: eu-west-1c
+  - cidr: 10.99.0.0/24
+    name: utility-eu-west-1a
+    type: Utility
+    zone: eu-west-1a
+  - cidr: 10.99.1.0/24
+    name: utility-eu-west-1b
+    type: Utility
+    zone: eu-west-1b
+  - cidr: 10.99.2.0/24
+    name: utility-eu-west-1c
+    type: Utility
+    zone: eu-west-1c
+  topology:
+    dns:
+      type: Private
+    masters: private
+    nodes: private
+
+---
+
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  labels:
+    kops.k8s.io/cluster: tftest.mirdanhost.internal
+  name: master-eu-west-1a
+spec:
+  associatePublicIp: false
+  cloudLabels:
+    Type: kubernetes
+    Role: master
+    Owner: tftest.mirdanhost.internal
+    Usage: k8s
+    Provisioner: kops
+  image: kope.io/k8s-1.5-debian-jessie-amd64-hvm-ebs-2017-01-09
+  machineType: t2.large
+  maxSize: 1
+  minSize: 1
+  role: Master
+  subnets:
+  - eu-west-1a
+
+---
+
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  labels:
+    kops.k8s.io/cluster: tftest.mirdanhost.internal
+  name: master-eu-west-1a
+spec:
+  associatePublicIp: false
+  cloudLabels:
+    Type: kubernetes
+    Role: master
+    Owner: tftest.mirdanhost.internal
+    Usage: k8s
+    Provisioner: kops
+  image: kope.io/k8s-1.5-debian-jessie-amd64-hvm-ebs-2017-01-09
+  machineType: t2.large
+  maxSize: 1
+  minSize: 1
+  role: Master
+  subnets:
+  - eu-west-1b
+
+---
+
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  labels:
+    kops.k8s.io/cluster: tftest.mirdanhost.internal
+  name: master-eu-west-1a
+spec:
+  associatePublicIp: false
+  cloudLabels:
+    Type: kubernetes
+    Role: master
+    Owner: tftest.mirdanhost.internal
+    Usage: k8s
+    Provisioner: kops
+  image: kope.io/k8s-1.5-debian-jessie-amd64-hvm-ebs-2017-01-09
+  machineType: t2.large
+  maxSize: 1
+  minSize: 1
+  role: Master
+  subnets:
+  - eu-west-1c
+
+---
+
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  labels:
+    kops.k8s.io/cluster: tftest.mirdanhost.internal
+  name: nodes
+spec:
+  associatePublicIp: false
+  cloudLabels:
+    Type: kubernetes
+    Role: master
+    Owner: tftest.mirdanhost.internal
+    Usage: k8s
+    Provisioner: kops
+  image: kope.io/k8s-1.5-debian-jessie-amd64-hvm-ebs-2017-01-09
+  machineType: m3.large
+  maxSize: 3
+  minSize: 3
+  role: Node
+  rootVolumeSize: 20
+  rootVolumeType: gp2
+  subnets:
+  - eu-west-1a
+  - eu-west-1b
+  - eu-west-1c
